@@ -1,0 +1,20 @@
+{
+    "setupFiles": [
+        "<rootDir>\\node_modules\\react-scripts\\config\\polyfills.js"
+    ],
+    "testPathIgnorePatterns": [
+        "<rootDir>[/\\\\](build|docs|node_modules|scripts|src|config)[/\\\\]"
+    ],
+    "testEnvironment": "jsdom",
+    "testURL": "http://localhost",
+    "transform": {
+        "^.+\\.css$": "<rootDir>\\node_modules\\react-scripts\\config\\jest\\cssTransform.js",
+        "^(?!.*\\.(js|jsx|css|json)$)": "<rootDir>\\node_modules\\react-scripts\\config\\jest\\fileTransform.js"
+    },
+    "transformIgnorePatterns": [
+        "[/\\\\]node_modules[/\\\\].+\\.(js|jsx)$"
+    ],
+    "moduleNameMapper": {
+        "^react-native$": "react-native-web"
+    }
+}

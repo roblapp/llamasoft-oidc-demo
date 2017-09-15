@@ -1,0 +1,3 @@
+export const GET_ALL_CLAIMS = 'GET_ALL_CLAIMS';
+
+export const GET_ALL_CLAIMS_ERROR = 'GET_ALL_CLAIMS_ERROR';
