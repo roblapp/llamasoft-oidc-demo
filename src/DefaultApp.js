@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Route, Switch } from 'react-router-dom';
 import Navbar from './Navbar';
 import Home from './Home';
+import Error from './Error';
 import './DefaultApp.css';
 
 class DefaultApp extends Component {
@@ -23,6 +24,9 @@ class DefaultApp extends Component {
                     <Switch>
                         <Route exact path="/" render={props => (
                             <Home {...props} />
+                        )}/>
+                        <Route exact path="/" render={props => (
+                            <Error {...props} />
                         )}/>
                         <Route render={props => (
                             <div>

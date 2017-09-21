@@ -1,11 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Link } from  'react-router-dom';
-// import { Nav, Navbar, NavItem, Glyphicon } from 'react-bootstrap';
-
-// import 'bootstrap/dist/css/bootstrap.css';
-// import 'bootstrap/dist/css/bootstrap-theme.css';
-// import 'font-awesome/css/font-awesome.min.css';
 import './Navbar.css';
 
 class Navbar extends Component {

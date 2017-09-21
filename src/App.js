@@ -7,7 +7,6 @@ import DefaultApp from './DefaultApp';
 import AuthenticatedApp from './AuthenticatedApp';
 import Callback from './Callback';
 import SilentRenew from './SilentRenew';
-
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/css/bootstrap-theme.css';
 import 'font-awesome/css/font-awesome.min.css';

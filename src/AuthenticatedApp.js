@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Route, Switch } from 'react-router-dom';
 import Navbar from './Navbar';
 import Landing from './Landing';
+import Error from './Error';
 import './AuthenticatedApp.css';
 
 class AuthenticatedApp extends Component {
@@ -24,6 +25,9 @@ class AuthenticatedApp extends Component {
                         <Switch>
                             <Route path="/Landing" render={props => (
                                 <Landing {...props} />
+                            )}/>
+                            <Route exact path="/" render={props => (
+                                <Error {...props} />
                             )}/>
                             <Route render={props => (
                                 <div>
