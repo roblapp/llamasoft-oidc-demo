@@ -65,7 +65,6 @@ App.propTypes = {
     oidc: PropTypes.object
 };
 
-
 function mapStateToProps(state) {
     return {
         oidc: state.oidc
