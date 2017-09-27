@@ -36,7 +36,8 @@ class App extends Component {
       return (<div>User is Loading</div>);
     }
 
-    if (matchPath(this.props.location.pathname, { path: "/Callback", strict: false, exact: true }) !== null) {
+    //this.props.oidc.user === null && 
+    if (this.props.oidc.user === null && matchPath(this.props.location.pathname, { path: "/Callback", strict: false, exact: true }) !== null) {
           console.log("/Callback");
           console.log("");
           return (<Callback userManager={this.props.userManager} {...this.props}/>);
