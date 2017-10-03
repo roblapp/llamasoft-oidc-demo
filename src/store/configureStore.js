@@ -2,13 +2,12 @@ import {createStore, compose, applyMiddleware} from 'redux';
 import reduxImmutableStateInvariant from 'redux-immutable-state-invariant';
 import thunk from 'redux-thunk';
 import rootReducer from '../reducers';
-import createOidcMiddleware from 'redux-oidc';
-import userManager from '../config/UserManager';
-import ConfigurationService from '../config/ConfigurationService';
+// import createOidcMiddleware from 'redux-oidc';
+// import userManager from '../config/UserManager';
 
 console.log("Creating Store");
 
-const oidcMiddleware = createOidcMiddleware(userManager);
+// const oidcMiddleware = createOidcMiddleware(userManager);
 
 // const customMiddleware = store => next => action => {
 //   console.log("Custom MiddleWare Logging");
@@ -20,8 +19,9 @@ function configureStoreProd(initialState) {
   console.log("Configuring Production Store");
   const middlewares = [
     // Add other middleware on this line...
+    // customMiddleware,
 
-    oidcMiddleware,
+    // oidcMiddleware,
 
     // thunk middleware can also accept an extra argument to be passed to each thunk action
     // https://github.com/gaearon/redux-thunk#injecting-a-custom-argument
@@ -40,7 +40,7 @@ function configureStoreDev(initialState) {
     // Add other middleware on this line...
     // customMiddleware,
     
-    oidcMiddleware,
+    // oidcMiddleware,
 
     // Redux middleware that spits an error on you when you try to mutate your state either inside a dispatch or between dispatches.
     reduxImmutableStateInvariant(),
@@ -65,9 +65,7 @@ function configureStoreDev(initialState) {
   return store;
 }
 
-const configService = new ConfigurationService();
-
-const configureStore = configService.isProductionEnv() ? configureStoreProd : configureStoreDev;
+const configureStore = process.env.NODE_ENV === 'production' ? configureStoreProd : configureStoreDev;
 
 export default configureStore;
 

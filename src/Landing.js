@@ -2,14 +2,11 @@ import React from 'react';
 import { Button } from 'react-bootstrap';
 import { connect } from 'react-redux';
 import * as actions from './actions/landingPageActions';
-import ConfigurationService from './config/ConfigurationService';
 import './Landing.css';
 
 export class Landing extends React.Component {
     constructor(props) {
         super(props);
-
-        this.configService = new ConfigurationService();
 
         this.onApiClick = this.onApiClick.bind(this);
         this.renderBody = this.renderBody.bind(this);
@@ -19,7 +16,8 @@ export class Landing extends React.Component {
     }
 
     onApiClick() {
-        this.props.getAllClaims();
+        const accessToken = this.props.auth.getAccessToken();
+        this.props.getAllClaims(accessToken);
     }
 
     renderBody() {
@@ -46,27 +44,13 @@ export class Landing extends React.Component {
     }
 
     renderApplicationMetadata() {
-        const authority = this.configService.getAuthorityUrl();
-        const clientId = this.configService.getClientId();
-        const redirectUrl = this.configService.getRedirectUrl();
-        const responseType = this.configService.getAuthResponseType();
-        const scopes = this.configService.getRequestedScopes();
-        const postLogoutRedirectUrl = this.configService.getPostLogoutRedirectUrl();
-
-        const metadata = {
-            authority,
-            clientId,
-            redirectUrl,
-            responseType,
-            scopes,
-            postLogoutRedirectUrl
-        };
+        const authOptions = this.props.auth.getAuthOptions();
 
         return (
                 <div>
                     <h2>Application Metadata</h2>
                     <pre>
-                        {JSON.stringify(metadata, null, 2)}
+                        {JSON.stringify(authOptions, null, 2)}
                     </pre>
                 </div>
             );
@@ -75,9 +59,9 @@ export class Landing extends React.Component {
     renderOpenIdConnectData() {
         return (
                 <div>
-                    <h2>OpenID Connect Data</h2>
+                    <h2>OpenID Connect Data (From ID Token)</h2>
                     <pre>
-                        {JSON.stringify(this.props.oidc, null, 2)}
+                        {JSON.stringify(this.props.auth.getUserInfoFromIdToken(), null, 2)}
                     </pre>
                 </div>
             );
@@ -110,8 +94,7 @@ export class Landing extends React.Component {
 function mapStateToProps(state) {
     return {
       data: state.landingPageData.data,
-      error: state.landingPageData.error,
-      oidc: state.oidc
+      error: state.landingPageData.error
     };
 }
 

@@ -1,79 +1,116 @@
-import React, { Component } from 'react';
-import { matchPath } from 'react-router';
-import { connect } from 'react-redux';
-import { withRouter } from 'react-router';
-import PropTypes from 'prop-types';
-import DefaultApp from './DefaultApp';
-import AuthenticatedApp from './AuthenticatedApp';
+import React from 'react';
+import { Switch, Route } from 'react-router-dom';
+import LLamasoftOidcClient from './auth/LLamasoftOidcClient';
+import Navbar from './Navbar';
+import Home from './Home';
 import Callback from './Callback';
-import SilentRenew from './SilentRenew';
+import Landing from './Landing';
+import Error from './Error';
+import LoginRedirect from './LoginRedirect';
+import Logger from './auth/Logger';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/css/bootstrap-theme.css';
 import 'font-awesome/css/font-awesome.min.css';
 import 'animate.css/animate.min.css';
 import './App.css';
 
-class App extends Component {
-  // constructor(props) {
-  //   super(props);
+//App is a container for the entire application
+export const App = () => {
+    
+    console.log("App executing");
 
-  //   this.props.history.listen((location, action) => {
+    //   this.props.history.listen((location, action) => {
   //     console.log("on route change");
   //     console.log(location);
   //     console.log(action);
   //   });
   // }
 
-  render() {
-    console.log("App::render()");
-    console.log("Location and OIDC info:");
-    console.log(this.props.location);
-    console.log(this.props.oidc);
+    const authority = 'http://localhost:5000'; //'https://demo.identityserver.io';
 
-    if (this.props.oidc.isLoadingUser) {
-      console.log("user is loading");
-      console.log("");
-      return (<div>User is Loading</div>);
-    }
+    //Required
+    const authOptions = {
+      authority,
+      authorizeEndpoint: `${authority}/connect/authorize`,
+      endSessionEndpoint: `${authority}/connect/endsession`,
 
-    //this.props.oidc.user === null && 
-    if (this.props.oidc.user === null && matchPath(this.props.location.pathname, { path: "/Callback", strict: false, exact: true }) !== null) {
-          console.log("/Callback");
-          console.log("");
-          return (<Callback userManager={this.props.userManager} {...this.props}/>);
-    }
+      //Paths MUST begin with leading '/'. They are all relative paths! They cannot be in a different origin.
 
-    if (matchPath(this.props.location.pathname, { path: "/SilentRenew", strict: false, exact: true }) !== null) {
-      console.log("/SilentRenew");
-      console.log("");
-      return (<SilentRenew {...this.props} />);
-    }
+      redirectPath: '/Callback',                    //OAuth 2.0 client_redirect_uri (must be known to OIDC provider)
+      defaultPostAuthorizePath: '/Landing',         //Where the user should end up after the auth process (after the /Callback page)
+      defaultPostLogoutRedirectPath: undefined,     //Example: '/LogoutLandingPath'
+      silentRenewCallbackPath: '/SilentRenew',      //Must be registered as a client redirect_uri with the OIDC provider
 
-    if (this.props.oidc.user && this.props.oidc.user !== null) {
-      console.log("detected the user was authenticated. Showing the Authenticated application");
-      console.log("");
-      return (<AuthenticatedApp userManager={this.props.userManager} />);
-    }
-    
-    console.log("detected the user was NOT authenticated. Showing the Default application");
-    console.log("");
-    return (<DefaultApp userManager={this.props.userManager} />);
-  }
-}
+      clientId: 'implicit',                         //The OAuth 2.0 client_id
+      responseType: 'id_token token',               //The response type from the OIDC provider
+      scopes: 'openid profile email api scgx-identity',           //The requested scopes (as per OIDC spec)
+      
+      useAutomaticSilentTokenRenew: false,          //For automatic token renewal
+      silentRenewIFrameTimeoutSeconds: 10,          //The timeout for the IFrame that silently refreshes tokens
+      silentRenewTokenRequestOffsetSeconds: 100,    //Will obtain a new token 100 seconds before the current token expires for a seamless transition
+      issuerOverride: undefined                     //Will rarely need this. Override this to a value that will be compared with the iss claim in a JWT
+    };
 
-App.propTypes = {
-    userManager: PropTypes.object.isRequired,
-    oidc: PropTypes.object
+    Logger.level = Logger.DEBUG; //Set logging level to debug
+
+    const authService = new LLamasoftOidcClient(authOptions);
+
+    return (
+        <div className="App">
+            <div className="App-header">
+                <Navbar auth={authService} />
+            </div>
+
+            <div className="App-content">
+                <div className="row">
+                    <div className="col-xs-12">
+                        <h3>Route: <code>{location.pathname}</code></h3>
+                    </div>
+                </div>
+                <div className="row">
+                    <div className="col-xs-12">
+                        <Switch>
+
+                          {/* Put all non protected routes in this format */}
+                            <Route exact path="/" render={props => (
+                                <Home auth={authService} {...props} />
+                            )}/>
+                            <Route exact path="/Error" render={props => (
+                                <Error {...props} />
+                            )}/>
+
+
+
+                            {/* Required for OpenID Connect */}
+                            <Route exact path="/Callback" render={(props) => {
+                                return <Callback auth={authService} {...props} />;
+                            }}/>
+
+
+
+                            {/* Put all protected routes in this format */}
+                            <Route exact path="/Landing" render={props => (
+                                !authService.isAuthenticated() ? (
+                                  <LoginRedirect auth={authService} returnUrlPath={location.pathname} {...props} />
+                                ) : (
+                                  <Landing auth={authService} {...props} />
+                                )
+                            )}/>
+                            
+
+
+                            {/* Handle non matching routes */}
+                            <Route render={props => (
+                                <div>
+                                <h3>No match for <code>{location.pathname}</code></h3>
+                                </div>
+                            )} />
+                        </Switch>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 };
 
-function mapStateToProps(state) {
-    return {
-        oidc: state.oidc
-    };
-}
-
-function mapDispatchToProps() {
-    return {};
-}
-
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(App));
+export default App;

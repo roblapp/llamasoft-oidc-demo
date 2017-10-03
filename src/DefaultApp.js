@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+/*import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Route, Switch } from 'react-router-dom';
 import Navbar from './Navbar';
@@ -46,4 +46,4 @@ DefaultApp.propTypes = {
     userManager: PropTypes.object.isRequired
 };
 
-export default DefaultApp;
+export default DefaultApp;*/

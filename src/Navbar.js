@@ -8,23 +8,25 @@ class Navbar extends Component {
     super(props);
 
     this.renderMenu = this.renderMenu.bind(this);
-    // this.handleLogin = this.handleLogin.bind(this);
   }
 
   handleLogin = (e) => {
     e.preventDefault();
-    this.props.userManager.signinRedirect();
+    e.stopPropagation();
+
+    this.props.auth.redirectToLogin();
   }
 
   handleLogout = (e) => {
     e.preventDefault();
-    this.props.userManager.signoutRedirect();
-    // this.props.userManager.removeUser();
+    e.stopPropagation();
+
+    this.props.auth.redirectToLogout();
   }
 
   //http://getbootstrap.com/examples/theme/
   renderMenu() {
-    if (this.props.isAuthenticated) {
+    if (this.props.auth.isAuthenticated()) {
       return (
         <div id="navbar" className="navbar-collapse collapse">
           <ul className="nav navbar-nav">
@@ -47,6 +49,7 @@ class Navbar extends Component {
       <div id="navbar" className="navbar-collapse collapse">
         <ul className="nav navbar-nav">
           <li><Link to="/"><i style={{ paddingRight: "7px" }} className="fa fa-home" aria-hidden="true"></i>Home</Link></li>
+          <li><Link to="/Landing"><i style={{ paddingRight: "7px" }} className="fa fa-home" aria-hidden="true"></i>Landing (protected route for demo)</Link></li>
         </ul>
         <ul className="nav navbar-nav navbar-right">
           <li><Link to="/Help"><i style={{ paddingRight: "7px" }} className="fa fa-question-circle-o" aria-hidden="true"></i>Help</Link></li>
@@ -79,8 +82,7 @@ class Navbar extends Component {
 }
 
 Navbar.propTypes = {
-    userManager: PropTypes.object.isRequired,
-    isAuthenticated: PropTypes.bool.isRequired
+    auth: PropTypes.object.isRequired
 };
 
 export default Navbar;
