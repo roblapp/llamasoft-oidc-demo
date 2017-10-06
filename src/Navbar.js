@@ -49,7 +49,6 @@ class Navbar extends Component {
       <div id="navbar" className="navbar-collapse collapse">
         <ul className="nav navbar-nav">
           <li><Link to="/"><i style={{ paddingRight: "7px" }} className="fa fa-home" aria-hidden="true"></i>Home</Link></li>
-          <li><Link to="/Landing"><i style={{ paddingRight: "7px" }} className="fa fa-home" aria-hidden="true"></i>Landing (protected route for demo)</Link></li>
         </ul>
         <ul className="nav navbar-nav navbar-right">
           <li><Link to="/Help"><i style={{ paddingRight: "7px" }} className="fa fa-question-circle-o" aria-hidden="true"></i>Help</Link></li>
