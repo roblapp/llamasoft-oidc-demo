@@ -9,10 +9,32 @@ export class Landing extends React.Component {
         super(props);
 
         this.onApiClick = this.onApiClick.bind(this);
+        this.onAddHandler = this.onAddHandler.bind(this);
+        this.onRemoveHandler = this.onRemoveHandler.bind(this);
         this.renderBody = this.renderBody.bind(this);
         this.renderError = this.renderError.bind(this);
         this.renderApplicationMetadata = this.renderApplicationMetadata.bind(this);
         this.renderOpenIdConnectData = this.renderOpenIdConnectData.bind(this);
+    }
+
+    componentWillMount() {
+        console.log("Landing componentWillMount");
+    }
+
+    componentWillUnmount() {
+        console.log("Landing componentWillUnmount");
+    }
+
+    onAddHandler() {
+        this.props.auth.getEventManager().addOnSilentRenewTriggeredEventHandler(this.handler);
+    }
+
+    onRemoveHandler() {
+        this.props.auth.getEventManager().removeOnSilentRenewTriggeredEventHandler(this.handler);
+    }
+
+    handler() {
+        alert("Ok, another SilentRenew handler");
     }
 
     onApiClick() {
@@ -72,6 +94,8 @@ export class Landing extends React.Component {
             <div>
                 <div className="row pad-row">
                     <Button bsStyle="primary" onClick={this.onApiClick}>Call Protected API</Button>
+                    <Button bsStyle="primary" onClick={this.onAddHandler}>Add Handler</Button>
+                    <Button bsStyle="primary" onClick={this.onRemoveHandler}>Remove Handler</Button>
                 </div>
                 <div className="row pad-row">
                     <div className="col-xs-6">

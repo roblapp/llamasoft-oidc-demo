@@ -71,7 +71,7 @@ class Navbar extends Component {
                 <span className="icon-bar"></span>
                 <span className="icon-bar"></span>
               </button>
-              <a className="navbar-brand" href="#"><i style={{ paddingRight: "15px" }} className="fa fa-users" aria-hidden="true"></i>React App </a>
+              <Link className="navbar-brand" to="/"><i style={{ paddingRight: "15px" }} className="fa fa-users" aria-hidden="true"></i>React App</Link>
             </div>
               {menuContent}
           </div>

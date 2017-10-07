@@ -4,24 +4,7 @@ import loading from './loading.svg';
 class Callback extends Component {
 
   componentDidMount() {
-    this.props.auth.handleAuthorizeCallback(
-
-      //Success callback
-      (relativeReturnPath) => {
-            console.log("Auth Process Success. Now we need to redirect to path " + relativeReturnPath);
-            this.props.history.push(relativeReturnPath);
-        },
-
-        //Error callback
-        (error) => {
-            console.error("Error!");
-            console.error(error);
-            this.props.history.push("/Error");
-        },
-
-        //Hook into process that stores idToken and accessToken
-        (tokenKey, tokenValue) => {}
-    );
+    this.props.auth.handleAuthorizeCallback();
   }
 
   render() {

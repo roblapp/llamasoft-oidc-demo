@@ -1,3 +1,4 @@
+import LLamasoftOidcEvent from './LLamasoftOidcEvent';
 
 export default class LLamasoftOidcEventManager {
     constructor() {
@@ -9,42 +10,98 @@ export default class LLamasoftOidcEventManager {
 
         this.onSilentRenewSuccessEvent = new LLamasoftOidcEvent("SILENT_RENEW_SUCCESS");
         this.onSilentRenewErrorEvent = new LLamasoftOidcEvent("SILENT_RENEW_ERROR");
+
+        this.onSilentRenewTriggeredEvent = new LLamasoftOidcEvent("SILENT_RENEW_TRIGGERED");
         
     }
 
+    ///////////////////////////////////////////////////////////////
+    /// Add/Remove Handlers
+    ///////////////////////////////////////////////////////////////
     addOnIdTokenValidatedEventHandler(callbackFunction) {
         this.onIdTokenValidatedEvent.addHandler(callbackFunction);
+    }
+
+    removeOnIdTokenValidatedEventHandler(callbackFunction) {
+        this.onIdTokenValidatedEvent.removeHandler(callbackFunction);
     }
 
     addOnAccessTokenValidatedEventHandler(callbackFunction) {
         this.onAccessTokenValidatedEvent.addHandler(callbackFunction);
     }
 
+    removeOnAccessTokenValidatedEventHandler(callbackFunction) {
+        this.onAccessTokenValidatedEvent.removeHandler(callbackFunction);
+    }
+
     addOnLoginSuccessEventHandler(callbackFunction) {
         this.onLoginSuccessEvent.addHandler(callbackFunction);
+    }
+
+    removeOnLoginSuccessEventHandler(callbackFunction) {
+        this.onLoginSuccessEvent.removeHandler(callbackFunction);
     }
 
     addOnLoginErrorEventHandler(callbackFunction) {
         this.onLoginErrorEvent.addHandler(callbackFunction);
     }
 
+    removeOnLoginErrorEventHandler(callbackFunction) {
+        this.onLoginErrorEvent.removeHandler(callbackFunction);
+    }
+
     addOnSilentRenewSuccessEventHandler(callbackFunction) {
         this.onSilentRenewSuccessEvent.addHandler(callbackFunction);
+    }
+
+    removeOnSilentRenewSuccessEventHandler(callbackFunction) {
+        this.onSilentRenewSuccessEvent.removeHandler(callbackFunction);
     }
 
     addOnSilentRenewErrorEventHandler(callbackFunction) {
         this.onSilentRenewErrorEvent.addHandler(callbackFunction);
     }
 
-    raiseOnIdTokenValidatedEvent(data) {
-        this.onIdTokenValidatedEvent.raiseEvent(data);
+    removeOnSilentRenewErrorEventHandler(callbackFunction) {
+        this.onSilentRenewErrorEvent.removeHandler(callbackFunction);
     }
 
-    idTokenValidated(idToken) {
+    addOnSilentRenewTriggeredEventHandler(callbackFunction) {
+        this.onSilentRenewTriggeredEvent.addHandler(callbackFunction);
+    }
+
+    removeOnSilentRenewTriggeredEventHandler(callbackFunction) {
+        this.onSilentRenewTriggeredEvent.removeHandler(callbackFunction);
+    }
+
+    ///////////////////////////////////////////////////////////////
+    /// Raise Events
+    ///////////////////////////////////////////////////////////////
+    raiseLoginSuccessEvent(returnPath) {
+        this.onLoginSuccessEvent.raiseEvent(returnPath);
+    }
+
+    raiseLoginErrorEvent(error) {
+        this.onLoginErrorEvent.raiseEvent(error);
+    }
+
+    raiseSilentRenewSuccessEvent() {
+        this.onSilentRenewSuccessEvent.raiseEvent();
+    }
+
+    raiseSilentRenewErrorEvent(error) {
+        this.onSilentRenewErrorEvent.raiseEvent(error);
+    }
+
+    raiseIdTokenValidatedEvent(idToken) {
         this.onIdTokenValidatedEvent.raiseEvent(idToken);
     }
 
-    accessTokenValidated(accessToken) {
+    raiseAccessTokenValidatedEvent(accessToken) {
         this.onAccessTokenValidatedEvent.raiseEvent(accessToken);
+    }
+
+    raiseSilentRenewTriggeredEvent(timeout) {
+        this.onSilentRenewTriggeredEvent.raiseEvent(timeout);
     }
 }

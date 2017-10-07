@@ -2,7 +2,7 @@
 const authority = 'http://localhost:5000'; //'https://demo.identityserver.io';
 
 //Required
-export default {
+const authOptions = {
     authority,
     authorizeEndpoint: `${authority}/connect/authorize`,
     endSessionEndpoint: `${authority}/connect/endsession`,
@@ -21,20 +21,7 @@ export default {
     useAutomaticSilentTokenRenew: true,          //For automatic token renewal
     silentRenewIFrameTimeoutSeconds: 10,          //The timeout for the IFrame that silently refreshes tokens
     silentRenewTokenRequestOffsetSeconds: 100,    //Will obtain a new token 100 seconds before the current token expires for a seamless transition
-    issuerOverride: undefined,                     //Will rarely need this. Override this to a value that will be compared with the iss claim in a JWT
-
-    loginSuccessCallback: (returnUrl) => {
-        console.log("Auth Process Success. Now we need to redirect to path " + relativeReturnPath);
-        this.props.history.push(relativeReturnPath);
-    },
-
-    loginFailureCallback: (error) => {
-        console.error("Error!");
-        console.error(error);
-        this.props.history.push("/Error");
-    },
-
-    onStoreTokenCallback: (tokenKey, tokenValue) => {
-
-    }
+    issuerOverride: undefined                    //Will rarely need this. Override this to a value that will be compared with the iss claim in a JWT
 };
+
+export default authOptions;

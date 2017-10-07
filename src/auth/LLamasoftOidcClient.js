@@ -3,8 +3,10 @@ import UrlUtility from './UrlUtility';
 import WebStorage from './WebStorage';
 import Logger from './Logger';
 import IFrameWindow from './IFrameWindow';
+import AuthOptionsValidator from './AuthOptionsValidator';
 import ResponseValidator from './ResponseValidator';
 import RequestCreator from './RequestCreator';
+import LLamasoftOidcEventManager from './LLamasoftOidcEventManager';
 
 export default class LLamasoftOidcClient {
 
@@ -12,14 +14,20 @@ export default class LLamasoftOidcClient {
         authOptions,
         webStorage
     ) {
-        //TODO validate auth options
         this.authOptions = authOptions;
+        this.authOptionsValidator = new AuthOptionsValidator();
+
+        /// Validate the authOptions before going any further
+        this.authOptionsValidator.validate(this.authOptions);
+
         this.webStorage = webStorage ? webStorage : new WebStorage();
         this.requestCreator = new RequestCreator();
         this.responseValidator = new ResponseValidator(this.authOptions);
         this.handleAuthorizeCallback = this.handleAuthorizeCallback.bind(this);
 
-        // this.eventManager = new LLamasoftOidcEventManager();
+        this.eventManager = new LLamasoftOidcEventManager();
+
+        //TODO add code that checks for existing silent renew timer (page refreshes screw it up)
     }
 
     ///
@@ -32,11 +40,15 @@ export default class LLamasoftOidcClient {
     redirectToLogin(returnPath) {
         this.debug("Begin redirectToLogin");
 
-        //TODO add validation on authOptions?
-
         //If no return path is specified just set a default
-        if (!returnPath) {
-            returnPath = this.authOptions.defaultPostAuthorizePath;
+        if (!this.authOptionsValidator.validateLocalPath(returnPath)) {
+            //If the propert specified on the authOptions is valid then use that
+            if (this.authOptionsValidator.validateLocalPath(this.authOptions.defaultPostAuthorizePath)) {
+                returnPath = this.authOptions.defaultPostAuthorizePath;
+            } else {
+                Logger.warn("Missing defaultPostAuthorizePath property on authOptions. Using a default value of '/'")
+                returnPath = "/";
+            }
             this.debug(`Set returnPath to the defaultPostAuthorizePath '${returnPath}'`);
         }
 
@@ -75,7 +87,7 @@ export default class LLamasoftOidcClient {
         return this.requestCreator.createLoginRequestUrl(authorizeEndpoint, clientId, redirectUri, responseType, scopes, state, nonce);
     }
 
-    handleAuthorizeCallback(onSuccess, onError, onStoreToken) {
+    handleAuthorizeCallback() {
         try {
             this.debug("Starting handleAuthorizeCallback");
             this.debug(JSON.stringify(this.authOptions));
@@ -87,7 +99,8 @@ export default class LLamasoftOidcClient {
             }
 
             const responseObject = UrlUtility.urlHashToJSONObject(hash);
-            console.dir(responseObject);
+            this.debug("Parsed response from OIDC provider:");
+            this.debug(JSON.stringify(responseObject));
 
             this.responseValidator.validateImplicitFlowResponse(responseObject);
 
@@ -95,10 +108,8 @@ export default class LLamasoftOidcClient {
             this.webStorage.store("accessToken", responseObject.access_token);
             
             //Give the user a hook without having to come up with a custom implementation of WebStorage
-            if (onStoreToken && typeof onStoreToken === "function") {
-                onStoreToken("idToken", responseObject.id_token);
-                onStoreToken("accessToken", responseObject.access_token);
-            }
+            this.eventManager.raiseIdTokenValidatedEvent(responseObject.id_token);
+            this.eventManager.raiseAccessTokenValidatedEvent(responseObject.access_token);
 
             //Will be valid (includes the leading '/') unless someone manually modified it
             const returnPath = window.localStorage["returnPath"];
@@ -121,10 +132,10 @@ export default class LLamasoftOidcClient {
             this.debug("Completed handleAuthorizeCallback");
             this.debug("Invoking onSuccess callback");
 
-            onSuccess(returnPath); //Always make sure we have the leading '/'
+            this.eventManager.raiseLoginSuccessEvent(returnPath); //Always make sure we have the leading '/'
         } catch (error) {
             this.error("Authentication callback process failed. Calling user callback 'loginFailureCallback'");
-            onError(error);
+            this.eventManager.raiseLoginErrorEvent(error);
         }
     }
 
@@ -142,26 +153,21 @@ export default class LLamasoftOidcClient {
         try {
             this.debug("Starting completeSilentRenewProcess");
             const responseObject = UrlUtility.urlHashToJSONObject(url);
+            this.debug("Parsed response from OIDC provider:");
+            this.debug(JSON.stringify(responseObject));
                 
+            this.responseValidator.validateImplicitFlowResponse(responseObject);
+
             //Remove existing tokens
             this.webStorage.remove("accessToken");
             this.webStorage.remove("idToken");
-
-            console.dir(responseObject);
-
-            this.responseValidator.validateImplicitFlowResponse(responseObject);
 
             this.webStorage.store("idToken", responseObject.id_token);
             this.webStorage.store("accessToken", responseObject.access_token);
             
             //Give the user a hook without having to come up with a custom implementation of WebStorage
-            if (this.authOptions.onTokenStore && typeof this.authOptions.onTokenStore === "function") {
-                this.authOptions.onTokenStore("idToken", responseObject.id_token);
-                this.authOptions.onTokenStore("accessToken", responseObject.access_token);
-
-
-                //this.events.idTokenValidated(idToken);
-            }
+            this.eventManager.raiseIdTokenValidatedEvent(responseObject.id_token);
+            this.eventManager.raiseAccessTokenValidatedEvent(responseObject.access_token);
 
             //Do cleanup
             window.localStorage.removeItem("state");
@@ -172,7 +178,7 @@ export default class LLamasoftOidcClient {
                 const expiresIn = window.parseInt(responseObject.expires_in, 10);
                 this.debug("accessToken expires in " + expiresIn);
                 this.debug("using automatic silent token renew feature");
-                this.scheduleSilentRenewalProcess(expiresIn);
+                this.scheduleSilentRenewalProcess(expiresIn); //Schedule the next silent renew
             } else {
                 this.warn("Not using automatic silent token renew feature");
                 //Automatically remove the token?
@@ -180,29 +186,32 @@ export default class LLamasoftOidcClient {
 
         //    this.debug("Completed completeSilentRenewProcess. Invoking ");
 
-            this.authOptions.onSilentRenewSuccessCallback(); //Always make sure we have the leading '/'
+            this.eventManager.raiseSilentRenewSuccessEvent();
         } catch(error) {
             //Handle error
             this.error("Authentication callback process failed. Calling user callback 'errorCallback'");
             this.error(error);
-            // this.authOptions.onSilentRenewErrorCallback(error);
+            this.eventManager.raiseSilentRenewErrorEvent(error);
         }
     }
 
     scheduleSilentRenewalProcess(expiresInSeconds) {
-        this.debug("scheduling token renewal");
+        this.debug("scheduling SilentRenew process");
         if (this.silentRenewTimer) {
             this.debug(`Clearing existing SilentRenew with identifier ${this.silentRenewTimer}`);
             window.clearTimeout(this.silentRenewTimer);
         }
        // const tokenTimerInMilliSeconds = expiresInSeconds*1000; //Must switch to milliseconds for window.setTimeout
         const tokenTimerInMilliSeconds = 10*1000; //Must switch to milliseconds for window.setTimeout
-        this.silentRenewTimer = window.setTimeout(() => this.triggerSilentRenewProcess(), tokenTimerInMilliSeconds);
+        this.silentRenewTimer = window.setTimeout(() => this.triggerSilentRenewProcess(tokenTimerInMilliSeconds), tokenTimerInMilliSeconds);
         this.debug(`SilentRenewTimer created with identifier '${this.silentRenewTimer}'`);
+        this.debug("Done scheduling SilentRenew process");
     }
 
-    triggerSilentRenewProcess() {
+    triggerSilentRenewProcess(tokenTimerInMilliSeconds) {
         this.debug("Starting silent renewal process");
+
+        this.eventManager.raiseSilentRenewTriggeredEvent(tokenTimerInMilliSeconds);
 
         //Cleanup old stuff
         this.debug("Cleaning up old state, nonce, returnPath, accessToken, idToken values");
@@ -294,6 +303,10 @@ export default class LLamasoftOidcClient {
 
         this.debug("user is valid and session is active");
         return true;
+    }
+
+    getEventManager() {
+        return this.eventManager;
     }
 
     getAuthOptions() {

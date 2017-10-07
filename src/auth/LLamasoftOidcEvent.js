@@ -7,13 +7,18 @@ export default class LLamasoftOidcEvent {
     }
 
     addHandler(callbackFunction) {
+        Logger.debug(`Adding event handler for event '${this.eventName}'`);
         this.callbacks.push(callbackFunction);
     }
 
     removeHandler(callbackFunction) {
+        Logger.debug(`Attempting to remove event handler for event '${this.eventName}'`);
         const index = this.callbacks.findIndex(func => func === callbackFunction);
         if (index >= 0) {
             this.callbacks.splice(index, 1);
+            Logger.debug(`Successfully removed event handler for event '${this.eventName}'`);
+        } else {
+            Logger.error(`Failed to remove event handler for event '${this.eventName}'`);
         }
     }
 
