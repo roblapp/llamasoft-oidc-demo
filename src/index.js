@@ -10,9 +10,8 @@ import App from './App';
 import './index.css';
 
 Logger.level = Logger.DEBUG; //Set logging level to debug (must be specified first)
-let authService = new LLamasoftOidcClient(authOptions); //Not a const! Will fail if you make it a const and try and add events
+let authService = new LLamasoftOidcClient(authOptions); //This will fail if you make it a const and try and add events. Just use ES6 let
                          
-
 ReactDOM.render(
     <Provider store={store}>
         <BrowserRouter>

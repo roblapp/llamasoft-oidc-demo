@@ -59,11 +59,11 @@ class App extends React.Component {
     }
 
     onSilentRenewTriggered = () => {
-        alert("SilentRenew was triggered");
+        console.log("SilentRenew was triggered");
     }
 
     onAccessTokenExpired = () => {
-        alert("accessTokenExpired");
+        console.log("accessTokenExpired");
     }
 
     render() {
