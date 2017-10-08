@@ -9,8 +9,9 @@ import Logger from './auth/Logger';
 import App from './App';
 import './index.css';
 
+Logger.level = Logger.DEBUG; //Set logging level to debug (must be specified first)
 let authService = new LLamasoftOidcClient(authOptions); //Not a const! Will fail if you make it a const and try and add events
-Logger.level = Logger.DEBUG;                            //Set logging level to debug
+                         
 
 ReactDOM.render(
     <Provider store={store}>

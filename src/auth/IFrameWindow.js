@@ -8,12 +8,10 @@ export default class IFrameWindow {
         window.addEventListener("message", this.messageEvent, false);
 
         this.htmlFrame = window.document.createElement("iframe");
-        // this.htmlFrame.style.visibility = "hidden";
+        this.htmlFrame.style.visibility = "hidden";
         this.htmlFrame.style.position = "absolute";
-        this.htmlFrame.style.height = 500;
-        this.htmlFrame.style.width = 500;
-        // this.htmlFrame.style.top = 100;
-        // this.htmlFrame.style.left = 100;
+        this.htmlFrame.style.height = 0;
+        this.htmlFrame.style.width = 0;
         
         window.document.body.appendChild(this.htmlFrame);
     }
@@ -62,7 +60,7 @@ export default class IFrameWindow {
             if (messageData) {
                 this.close();
                 Logger.debug("Successful response from SilentRenew IFrameWindow!");
-                console.dir(JSON.stringify(messageData));
+                Logger.debug(JSON.stringify(messageData));
                 
                 this.oidcClient.completeSilentRenewProcess(messageData.url); //This is really the completeSilentRenewProcess from LLamasoftOidcClient.js
             }

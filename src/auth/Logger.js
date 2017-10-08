@@ -8,11 +8,25 @@ const DEBUG = 4;
 let level;
 
 export default class Logger {
-    static get NONE() {return NONE};
-    static get ERROR() {return ERROR};
-    static get WARN() {return WARN};
-    static get INFO() {return INFO};
-    static get DEBUG() {return DEBUG};
+    static get NONE() {
+        return NONE;
+    }
+
+    static get ERROR() {
+        return ERROR;
+    }
+
+    static get WARN() {
+        return WARN;
+    }
+
+    static get INFO() {
+        return INFO;
+    }
+
+    static get DEBUG() {
+        return DEBUG;
+    }
 
     static get level(){
         return level;

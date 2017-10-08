@@ -13,6 +13,7 @@ export default class LLamasoftOidcEventManager {
 
         this.onSilentRenewTriggeredEvent = new LLamasoftOidcEvent("SILENT_RENEW_TRIGGERED");
         
+        this.onAccessTokenExpiredEvent = new LLamasoftOidcEvent("ACCESS_TOKEN_EXPIRED");
     }
 
     ///////////////////////////////////////////////////////////////
@@ -74,6 +75,14 @@ export default class LLamasoftOidcEventManager {
         this.onSilentRenewTriggeredEvent.removeHandler(callbackFunction);
     }
 
+    addOnAccessTokenExpiredEventHandler(callbackFunction) {
+        this.onAccessTokenExpiredEvent.addHandler(callbackFunction);
+    }
+
+    removeOnAccessTokenExpiredEventHandler(callbackFunction) {
+        this.onAccessTokenExpiredEvent.removeHandler(callbackFunction);
+    }
+
     ///////////////////////////////////////////////////////////////
     /// Raise Events
     ///////////////////////////////////////////////////////////////
@@ -101,7 +110,11 @@ export default class LLamasoftOidcEventManager {
         this.onAccessTokenValidatedEvent.raiseEvent(accessToken);
     }
 
-    raiseSilentRenewTriggeredEvent(timeout) {
-        this.onSilentRenewTriggeredEvent.raiseEvent(timeout);
+    raiseSilentRenewTriggeredEvent() {
+        this.onSilentRenewTriggeredEvent.raiseEvent();
+    }
+
+    raiseAccessTokenExpiredEvent() {
+        this.onAccessTokenExpiredEvent.raiseEvent();
     }
 }

@@ -27,7 +27,17 @@ export default class LLamasoftOidcClient {
 
         this.eventManager = new LLamasoftOidcEventManager();
 
-        //TODO add code that checks for existing silent renew timer (page refreshes screw it up)
+        //Check accessToken for expiration
+        const silentRenewUrl = this.authOptions.silentRenewCallbackUri;
+        
+        //If this logic wasn't here you'd lose the SilentRenew timers if you refreshed the page
+        const silentRenewFromSessionStorage = window.sessionStorage.getItem("silentRenew");
+        //Don't re-schedule the SilentRenew process when this class is instantiated during the SilentRenewCallback
+        if (silentRenewFromSessionStorage && silentRenewFromSessionStorage === "true" && !this.silentRenewInterval && !window.location.includes(silentRenewUrl)) {
+            this.debug("Rescheduling the SilentRenew process based on window.sessionStorage");
+            alert("Re-scheduling SilentRenew");
+            this.scheduleSilentRenewalProcess();
+        }
     }
 
     ///
@@ -40,18 +50,6 @@ export default class LLamasoftOidcClient {
     redirectToLogin(returnPath) {
         this.debug("Begin redirectToLogin");
 
-        //If no return path is specified just set a default
-        if (!this.authOptionsValidator.validateLocalPath(returnPath)) {
-            //If the propert specified on the authOptions is valid then use that
-            if (this.authOptionsValidator.validateLocalPath(this.authOptions.defaultPostAuthorizePath)) {
-                returnPath = this.authOptions.defaultPostAuthorizePath;
-            } else {
-                Logger.warn("Missing defaultPostAuthorizePath property on authOptions. Using a default value of '/'")
-                returnPath = "/";
-            }
-            this.debug(`Set returnPath to the defaultPostAuthorizePath '${returnPath}'`);
-        }
-
         //Cleanup old stuff
         this.debug("Cleaning up old state, nonce, returnPath, accessToken, idToken values");
         window.localStorage.removeItem("state");
@@ -59,6 +57,7 @@ export default class LLamasoftOidcClient {
         window.localStorage.removeItem("returnPath");
         this.webStorage.remove("accessToken");
         this.webStorage.remove("idToken");
+        window.sessionStorage.removeItem("silentRenew");
 
         const state = this.rand();
         const nonce = this.rand();
@@ -66,14 +65,16 @@ export default class LLamasoftOidcClient {
         this.debug("Setting state to " + state);
         this.debug("Setting nonce to " + nonce);
 
-        //Do not let user override localStorage here
+        //These values should always be temporarily stored in localStorage
         window.localStorage["state"] = state;
         window.localStorage["nonce"] = nonce;
-        window.localStorage["returnPath"] = returnPath;
+        if (returnPath) {
+            window.localStorage["returnPath"] = returnPath;
+        }
 
         const authorizeEndpoint = this.authOptions.authorizeEndpoint;
         const clientId = this.authOptions.clientId;
-        const redirectUri = window.location.origin + this.authOptions.redirectPath; //Can only redirect to a path in same origin
+        const redirectUri = this.authOptions.redirectUri; //Can only redirect to a path in same origin
         const responseType = this.authOptions.responseType;
         const scopes = this.authOptions.scopes;
         const authorizeUrl = this.createLoginRequestUrl(authorizeEndpoint, clientId, redirectUri, responseType, scopes, state, nonce);
@@ -111,7 +112,7 @@ export default class LLamasoftOidcClient {
             this.eventManager.raiseIdTokenValidatedEvent(responseObject.id_token);
             this.eventManager.raiseAccessTokenValidatedEvent(responseObject.access_token);
 
-            //Will be valid (includes the leading '/') unless someone manually modified it
+            //Might be undefined... that's OK, the consumer has to handle that case
             const returnPath = window.localStorage["returnPath"];
 
             //Do cleanup
@@ -120,19 +121,22 @@ export default class LLamasoftOidcClient {
             window.localStorage.removeItem("returnPath");
 
             if (this.authOptions.useAutomaticSilentTokenRenew) {
-                const expiresIn = window.parseInt(responseObject.expires_in, 10);
-                this.debug("accessToken expires in " + expiresIn);
-                this.debug("using automatic silent token renew feature");
-                this.scheduleSilentRenewalProcess(expiresIn);
+                this.debug("using SilentRenew feature for renewing accessToken");
+                this.scheduleSilentRenewalProcess();
             } else {
-                this.warn("Not using automatic silent token renew feature");
-                //Automatically remove the token?
+                this.warn("Not using SilentRenew feature. accessTokens will expire");
+                const offset = this.authOptions.postAccessTokenExpiredEventOffset && Number.isInteger(this.authOptions.postAccessTokenExpiredEventOffset) ? this.authOptions.postAccessTokenExpiredEventOffset : 0;
+                const whenToRaiseAccessTokenExpiredEvent = 1000*(parseInt(responseObject.expires_in, 10) + offset);
+                this.debug(`Setting ACCESS_TOKEN_EXPIRED_EVENT time to ${whenToRaiseAccessTokenExpiredEvent} milliseconds from now`);
+                window.setTimeout(() => {
+                    this.eventManager.raiseAccessTokenExpiredEvent();
+                }, whenToRaiseAccessTokenExpiredEvent);
             }
 
             this.debug("Completed handleAuthorizeCallback");
             this.debug("Invoking onSuccess callback");
 
-            this.eventManager.raiseLoginSuccessEvent(returnPath); //Always make sure we have the leading '/'
+            this.eventManager.raiseLoginSuccessEvent(returnPath);
         } catch (error) {
             this.error("Authentication callback process failed. Calling user callback 'loginFailureCallback'");
             this.eventManager.raiseLoginErrorEvent(error);
@@ -173,18 +177,8 @@ export default class LLamasoftOidcClient {
             window.localStorage.removeItem("state");
             window.localStorage.removeItem("nonce");
 
-            //Trigger the silent renew process a subsequent time
-            if (this.authOptions.useAutomaticSilentTokenRenew) {
-                const expiresIn = window.parseInt(responseObject.expires_in, 10);
-                this.debug("accessToken expires in " + expiresIn);
-                this.debug("using automatic silent token renew feature");
-                this.scheduleSilentRenewalProcess(expiresIn); //Schedule the next silent renew
-            } else {
-                this.warn("Not using automatic silent token renew feature");
-                //Automatically remove the token?
-            }
-
-        //    this.debug("Completed completeSilentRenewProcess. Invoking ");
+            this.debug("using SilentRenew feature for renewing accessToken");
+            this.scheduleSilentRenewalProcess();
 
             this.eventManager.raiseSilentRenewSuccessEvent();
         } catch(error) {
@@ -195,23 +189,51 @@ export default class LLamasoftOidcClient {
         }
     }
 
-    scheduleSilentRenewalProcess(expiresInSeconds) {
+    scheduleSilentRenewalProcess() {
         this.debug("scheduling SilentRenew process");
-        if (this.silentRenewTimer) {
-            this.debug(`Clearing existing SilentRenew with identifier ${this.silentRenewTimer}`);
-            window.clearTimeout(this.silentRenewTimer);
+
+        //Remove the existing interval and create a new one
+        if (this.silentRenewInterval) {
+            this.debug(`Clearing existing SilentRenew interval with identifier ${this.silentRenewInterval}`);
+            window.clearInterval(this.silentRenewInterval);
         }
-       // const tokenTimerInMilliSeconds = expiresInSeconds*1000; //Must switch to milliseconds for window.setTimeout
-        const tokenTimerInMilliSeconds = 10*1000; //Must switch to milliseconds for window.setTimeout
-        this.silentRenewTimer = window.setTimeout(() => this.triggerSilentRenewProcess(tokenTimerInMilliSeconds), tokenTimerInMilliSeconds);
-        this.debug(`SilentRenewTimer created with identifier '${this.silentRenewTimer}'`);
+
+        this.debug(`Setting SilentRenew interval for every ${this.authOptions.silentRenewIntervalInSeconds} seconds`);
+
+        const expireTime = this.getAccessTokenExpiration();
+
+        //Do this with setInterval - not setTimeout
+        this.silentRenewInterval = window.setInterval(() => {
+            this.debug("Starting SilentRenew interval");
+            const now = parseInt(Date.now() / 1000, 10); //get current time since UNIX epoch in seconds (not milliseconds which is why we divide by 1000)
+            //If we are before or at the expireTime
+            if (now <= expireTime) {
+                const diff = expireTime - now;
+                if (diff <= this.authOptions.silentRenewTokenRequestOffsetSeconds) {
+                    this.debug(`The accessToken is soon to be expried. There are ${diff} second(s) before it expires`);
+                    this.debug("Triggering the SilentRenew process");
+                    this.triggerSilentRenewProcess();
+                } else {
+                    this.debug(`The accessToken is not yet expried. There are still ${diff} seconds before it expires`);
+                }
+            } else {
+                //The time is after the expireTime - the token is expired
+                this.warn("SilentRenew - accessToken expired before it could be renewed");
+            }
+
+            this.debug("Finished SilentRenew interval");
+        }, this.authOptions.silentRenewIntervalInSeconds*1000);
+
+        window.sessionStorage.setItem("silentRenew", "true");
+
+        this.debug(`SilentRenewInterval created with identifier '${this.silentRenewInterval}'`);
         this.debug("Done scheduling SilentRenew process");
     }
 
-    triggerSilentRenewProcess(tokenTimerInMilliSeconds) {
+    triggerSilentRenewProcess() {
         this.debug("Starting silent renewal process");
 
-        this.eventManager.raiseSilentRenewTriggeredEvent(tokenTimerInMilliSeconds);
+        this.eventManager.raiseSilentRenewTriggeredEvent();
 
         //Cleanup old stuff
         this.debug("Cleaning up old state, nonce, returnPath, accessToken, idToken values");
@@ -230,7 +252,7 @@ export default class LLamasoftOidcClient {
 
         const authorizeEndpoint = this.authOptions.authorizeEndpoint;
         const clientId = this.authOptions.clientId;
-        const redirectUri = window.location.origin + this.authOptions.silentRenewCallbackPath; //Can only redirect to a path in same origin
+        const redirectUri = this.authOptions.silentRenewCallbackUri;
         const responseType = this.authOptions.responseType;
         const scopes = this.authOptions.scopes;
         const authorizeUrl = this.createLoginRequestUrl(authorizeEndpoint, clientId, redirectUri, responseType, scopes, state, nonce);
@@ -246,27 +268,31 @@ export default class LLamasoftOidcClient {
         hiddenIFrame.navigate({ authorizeUrl, timeout });
     }
 
-    redirectToLogout() {
+    redirectToLogout(returnPath) {
         this.debug("Starting logout process");
         const idToken = this.getIdToken();
 
+        this.debug("idToken = " + idToken);
+
         this.webStorage.remove("accessToken");
         this.webStorage.remove("idToken");
+        window.sessionStorage.removeItem("silentRenew");
 
         let returnUrl = window.location.origin;
 
-        if (this.authOptions.defaultPostLogoutRedirectPath) {
-            returnUrl += this.authOptions.defaultPostLogoutRedirectPath;
+        //Don't include trailing '/'
+        if (returnPath && returnPath.startsWith("/") && !returnPath.endsWith("/")) {
+            returnUrl += returnPath;
         }
 
         const url = this.createLogoutRequestUrl(this.authOptions.endSessionEndpoint, returnUrl, idToken);
         this.debug(`Constructed logout URL '${url}'`);
 
-        if (this.silentRenewTimer) {
-            this.debug(`Clearing silentRenewTimer with identifier ${this.silentRenewTimer}`);
-            window.clearTimeout(this.silentRenewTimer);
+        if (this.silentRenewInterval) {
+            this.debug(`Clearing silentRenewInterval with identifier ${this.silentRenewInterval}`);
+            window.clearInterval(this.silentRenewInterval);
         } else {
-            this.debug("No existing silentRenewTimer to be cleared");
+            this.debug("No existing silentRenewInterval to be cleared");
         }
         
         this.debug(`Completed logout process. Now navigating to logout URL '${url}'`);
@@ -287,22 +313,25 @@ export default class LLamasoftOidcClient {
     ///
     ///
     isAuthenticated() {
-        const userInfo = this.getUserInfoFromIdToken();
-        
-        if (!userInfo || userInfo === null) {
-            this.debug("Cannot find userinfo in storage");
-            return false;
+        return !this.isAccessTokenExpired();
+    }
+
+    isAccessTokenExpired() {
+        //Go off of the accessToken's expiration, not the idToken
+        const accessToken = this.getAccessTokenContent();
+
+        if (!accessToken || accessToken === null) {
+            return true;
         }
 
         const now = parseInt(Date.now() / 1000, 10);
 
-        if (userInfo.exp < now) {
-            this.debug("The user's session has expired");
-            return false;
+        if (accessToken.exp < now) {
+            this.debug("The accessToken has expired");
+            return true;
         }
 
-        this.debug("user is valid and session is active");
-        return true;
+        return false;
     }
 
     getEventManager() {
@@ -325,7 +354,7 @@ export default class LLamasoftOidcClient {
         return this.webStorage.get("idToken");
     }
 
-    getUserInfoFromIdToken() {
+    getIdTokenContent() {
         //Decode JWT
         const idToken = this.getIdToken();
         if (!idToken || idToken === null) {
@@ -337,16 +366,72 @@ export default class LLamasoftOidcClient {
         return jwtContent;
     }
 
-    userHasApiClaim(claimType) {
+    getAccessTokenContent() {
+        //Decode JWT
+        const accessToken = this.getAccessToken();
+        if (!accessToken || accessToken === null) {
+            return undefined;
+        }
 
+        var jwtContent = JwtUtility.jwtToJSONObject(accessToken);
+
+        return jwtContent;
+    }
+
+    getAccessTokenExpiration() {
+        const accessToken = this.getAccessTokenContent();
+        if (!accessToken) {
+            throw new Error("Cannot verify accessToken expiration => Could not find the accessToken in the current web storage mechanism");
+        }
+
+        if (!accessToken.exp) {
+            throw new Error("Cannot verify accessToken expiration => Could not find the accessToken.exp claim");
+        }
+
+        return accessToken.exp;
+    }
+
+    removeAccessToken() {
+        this.webStorage.remove("accessToken");
+    }
+
+    removeIdToken() {
+        this.webStorage.remove("idToken");
+    }
+
+    userHasApiClaim(claimType) {
+        if (!claimType || claimType === '') {
+            throw new Error(`Cannot verify api claim ${claimType}`);
+        }
+
+        const accessToken = this.getAccessTokenContent();
+        if (!accessToken) {
+            throw new Error("Cannot verify api claim => Could not find the accessToken in the current web storage mechanism");
+        }
+
+        return accessToken.hasOwnProperty(claimType);
     }
 
     userHasIdentityClaim(claimType) {
+        if (!claimType || claimType === '') {
+            throw new Error(`Cannot verify invalid identity claim ${claimType}`);
+        }
 
+        const idToken = this.getIdTokenContent();
+        if (!idToken) {
+            throw new Error(`Cannot verify identity claim ${claimType} => Could not find the idToken in the current web storage mechanism`);
+        }
+
+        return idToken.hasOwnProperty(claimType);
     }
 
     userHasScope(scopeName) {
+        const accessToken = this.getAccessTokenContent();
+        if (!accessToken) {
+            throw new Error("Cannot verify accessToken expiration => Could not find the accessToken in the current web storage mechanism");
+        }
 
+        return accessToken.scope && accessToken.scope.findIndex(scopeName) >= 0;
     }
     
     rand() {

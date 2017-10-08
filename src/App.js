@@ -14,8 +14,6 @@ import 'font-awesome/css/font-awesome.min.css';
 import 'animate.css/animate.min.css';
 import './App.css';
 
-
-
 class App extends React.Component {
     componentWillMount() {
         console.log("Auth componentWillMount");
@@ -24,6 +22,7 @@ class App extends React.Component {
         this.props.auth.getEventManager().addOnSilentRenewSuccessEventHandler(this.onSilentRenewSuccess);
         this.props.auth.getEventManager().addOnSilentRenewErrorEventHandler(this.onSilentRenewError);
         this.props.auth.getEventManager().addOnSilentRenewTriggeredEventHandler(this.onSilentRenewTriggered);
+        this.props.auth.getEventManager().addOnAccessTokenExpiredEventHandler(this.onAccessTokenExpired);
     }
 
     componentWillUnmount() {
@@ -33,15 +32,19 @@ class App extends React.Component {
         this.props.auth.getEventManager().removeOnSilentRenewSuccessEventHandler(this.onSilentRenewSuccess);
         this.props.auth.getEventManager().removeOnSilentRenewErrorEventHandler(this.onSilentRenewError);
         this.props.auth.getEventManager().removeOnSilentRenewTriggeredEventHandler(this.onSilentRenewTriggered);
+        this.props.auth.getEventManager().removeOnAccessTokenExpiredEventHandler(this.onAccessTokenExpired);
     }
 
-    onLoginSuccess = (relativeReturnPath) => {
-        console.log("Auth Process Success. Now we need to redirect to path " + relativeReturnPath);
-        this.props.history.push(relativeReturnPath);
+    onLoginSuccess = (returnPath) => {
+        console.log("Login Success");
+        if (returnPath) {
+            this.props.history.push(returnPath);
+        } else {
+            this.props.history.push("/Landing");
+        }
     }
 
     onLoginFailure = (error) => {
-        console.error("Error!");
         console.error(error);
         this.props.history.push("/Error");
     }
@@ -55,8 +58,12 @@ class App extends React.Component {
         console.error("SilentRenew failed");
     }
 
-    onSilentRenewTriggered = (timeout) => {
-        alert(`SilentRenew was triggered. The timeout was ${timeout} milliseconds`);
+    onSilentRenewTriggered = () => {
+        alert("SilentRenew was triggered");
+    }
+
+    onAccessTokenExpired = () => {
+        alert("accessTokenExpired");
     }
 
     render() {
@@ -123,8 +130,6 @@ class App extends React.Component {
         );
     }
 }
-
-// export default withRouter(withLLamaAuth(App, () => {}, () => {}, () => {}, () => {}));
 
 //Must add withRouter here so the auth callbacks can access this.props.history
 //to complete a redirect from /Callback to the desired landing page. If you
