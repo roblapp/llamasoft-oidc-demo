@@ -33,7 +33,7 @@ export default class LLamasoftOidcClient {
         //If this logic wasn't here you'd lose the SilentRenew timers if you refreshed the page
         const silentRenewFromSessionStorage = window.sessionStorage.getItem("silentRenew");
         //Don't re-schedule the SilentRenew process when this class is instantiated during the SilentRenewCallback
-        if (silentRenewFromSessionStorage && silentRenewFromSessionStorage === "true" && !this.silentRenewInterval && !window.location.includes(silentRenewUrl)) {
+        if (silentRenewFromSessionStorage && silentRenewFromSessionStorage === "true" && !this.silentRenewInterval && !window.location.href.includes(silentRenewUrl)) {
             this.debug("Rescheduling the SilentRenew process based on window.sessionStorage");
             alert("Re-scheduling SilentRenew");
             this.scheduleSilentRenewalProcess();
