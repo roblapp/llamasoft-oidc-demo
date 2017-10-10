@@ -1,6 +1,6 @@
-import Logger from './Logger';
+import Logger from '../auth/Logger';
 
-export default class LLamasoftOidcEvent {
+export default class AuthEvent {
     constructor(eventName) {
         this.eventName = eventName;
         this.callbacks = [];

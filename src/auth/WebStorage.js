@@ -1,5 +1,3 @@
-
-
 export default class WebStorage {
     store(key, value) {
         window.localStorage[key] = value;
@@ -13,18 +11,3 @@ export default class WebStorage {
         window.localStorage.removeItem(key);
     }
 }
-
-//Example of how to write your own custom storage
-// class CookieStorage {
-//     store(key, value) {
-        
-//     }
-
-//     get(key) {
-        
-//     }
-
-//     remove(key) {
-        
-//     }
-// }

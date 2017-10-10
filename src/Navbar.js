@@ -13,19 +13,20 @@ class Navbar extends Component {
   handleLogin = (e) => {
     e.preventDefault();
     e.stopPropagation();
-
+    alert("handle login called");
     this.props.auth.redirectToLogin();
   }
 
   handleLogout = (e) => {
     e.preventDefault();
     e.stopPropagation();
-
+    alert("handle logout called");
     this.props.auth.redirectToLogout();
   }
 
   //http://getbootstrap.com/examples/theme/
   renderMenu() {
+    console.log("$ " + this.props.auth.isAuthenticated());
     if (this.props.auth.isAuthenticated()) {
       return (
         <div id="navbar" className="navbar-collapse collapse">

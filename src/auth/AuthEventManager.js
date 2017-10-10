@@ -1,38 +1,31 @@
-import LLamasoftOidcEvent from './LLamasoftOidcEvent';
+import AuthEvent from './AuthEvent';
 
-export default class LLamasoftOidcEventManager {
+class AuthEventManager {
     constructor() {
-        this.onIdTokenValidatedEvent = new LLamasoftOidcEvent("ID_TOKEN_VALIDATED");
-        this.onAccessTokenValidatedEvent = new LLamasoftOidcEvent("ACCESS_TOKEN_VALIDATED");
+        this.onTokenValidatedEvent = new AuthEvent("TOKEN_VALIDATED");
 
-        this.onLoginSuccessEvent = new LLamasoftOidcEvent("LOGIN_SUCCESS");
-        this.onLoginErrorEvent = new LLamasoftOidcEvent("LOGIN_ERROR");
+        this.onLoginSuccessEvent = new AuthEvent("LOGIN_SUCCESS");
+        this.onLoginErrorEvent = new AuthEvent("LOGIN_ERROR");
 
-        this.onSilentRenewSuccessEvent = new LLamasoftOidcEvent("SILENT_RENEW_SUCCESS");
-        this.onSilentRenewErrorEvent = new LLamasoftOidcEvent("SILENT_RENEW_ERROR");
+        this.onLogoutErrorEvent = new AuthEvent("LOGOUT_ERROR");
 
-        this.onSilentRenewTriggeredEvent = new LLamasoftOidcEvent("SILENT_RENEW_TRIGGERED");
-        
-        this.onAccessTokenExpiredEvent = new LLamasoftOidcEvent("ACCESS_TOKEN_EXPIRED");
+        this.onSilentRenewSuccessEvent = new AuthEvent("SILENT_RENEW_SUCCESS");
+        this.onSilentRenewErrorEvent = new AuthEvent("SILENT_RENEW_ERROR");
+
+        this.onSilentRenewTriggeredEvent = new AuthEvent("SILENT_RENEW_TRIGGERED");
+
+        this.onAccessTokenExpiredEvent = new AuthEvent("ACCESS_TOKEN_EXPIRED");
     }
 
     ///////////////////////////////////////////////////////////////
     /// Add/Remove Handlers
     ///////////////////////////////////////////////////////////////
-    addOnIdTokenValidatedEventHandler(callbackFunction) {
-        this.onIdTokenValidatedEvent.addHandler(callbackFunction);
+    addOnTokenValidatedEventHandler(callbackFunction) {
+        this.onTokenValidatedEvent.addHandler(callbackFunction);
     }
 
-    removeOnIdTokenValidatedEventHandler(callbackFunction) {
-        this.onIdTokenValidatedEvent.removeHandler(callbackFunction);
-    }
-
-    addOnAccessTokenValidatedEventHandler(callbackFunction) {
-        this.onAccessTokenValidatedEvent.addHandler(callbackFunction);
-    }
-
-    removeOnAccessTokenValidatedEventHandler(callbackFunction) {
-        this.onAccessTokenValidatedEvent.removeHandler(callbackFunction);
+    removeOnTokenValidatedEventHandler(callbackFunction) {
+        this.onTokenValidatedEvent.removeHandler(callbackFunction);
     }
 
     addOnLoginSuccessEventHandler(callbackFunction) {
@@ -66,6 +59,15 @@ export default class LLamasoftOidcEventManager {
     removeOnSilentRenewErrorEventHandler(callbackFunction) {
         this.onSilentRenewErrorEvent.removeHandler(callbackFunction);
     }
+
+    addOnLogoutErrorEventHandler(callbackFunction) {
+        this.onLogoutErrorEvent.addHandler(callbackFunction);
+    }
+
+    removeOnLogoutErrorEventHandler(callbackFunction) {
+        this.onLogoutErrorEvent.removeHandler(callbackFunction);
+    }
+
 
     addOnSilentRenewTriggeredEventHandler(callbackFunction) {
         this.onSilentRenewTriggeredEvent.addHandler(callbackFunction);
@@ -102,12 +104,12 @@ export default class LLamasoftOidcEventManager {
         this.onSilentRenewErrorEvent.raiseEvent(error);
     }
 
-    raiseIdTokenValidatedEvent(idToken) {
-        this.onIdTokenValidatedEvent.raiseEvent(idToken);
+    raiseLogoutErrorEvent(error) {
+        this.onLogoutErrorEvent.raiseEvent(error);
     }
 
-    raiseAccessTokenValidatedEvent(accessToken) {
-        this.onAccessTokenValidatedEvent.raiseEvent(accessToken);
+    raiseTokenValidatedEvent(tokenType, tokenValue) {
+        this.onTokenValidatedEvent.raiseEvent(tokenType, tokenValue);
     }
 
     raiseSilentRenewTriggeredEvent() {
@@ -118,3 +120,5 @@ export default class LLamasoftOidcEventManager {
         this.onAccessTokenExpiredEvent.raiseEvent();
     }
 }
+
+export default AuthEventManager;

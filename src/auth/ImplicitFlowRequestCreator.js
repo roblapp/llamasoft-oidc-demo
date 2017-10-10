@@ -1,7 +1,7 @@
 import UrlUtility from './UrlUtility';
 
-export default class RequestCreator {
-    createLoginRequestUrl(authorizeEndpoint, clientId, redirectUri, responseType, scopes, state, nonce) {
+export default class ImplicitFlowRequestCreator {
+    createAuthorizeRequestUrl(authorizeEndpoint, clientId, redirectUri, responseType, scopes, state, nonce) {
         let url = authorizeEndpoint;
         url = UrlUtility.addQueryParam(url, "client_id", clientId);
         url = UrlUtility.addQueryParam(url, "redirect_uri", redirectUri);
@@ -12,7 +12,7 @@ export default class RequestCreator {
         return url;
     }
 
-    createLogoutRequestUrl(endSessionEndpoint, postLogoutRedirectUri, idToken) {
+    createEndSessionRequestUrl(endSessionEndpoint, postLogoutRedirectUri, idToken) {
         let url = endSessionEndpoint;
         url = UrlUtility.addQueryParam(url, "post_logout_redirect_uri", postLogoutRedirectUri);
         url = UrlUtility.addQueryParam(url, "id_token_hint", idToken);

@@ -5,6 +5,7 @@ class LoginRedirect extends Component {
 
   componentDidMount() {
       const attemptedPath = this.props.returnUrlPath;
+      alert("redirectToLogin LoginRedirect");
       this.props.auth.redirectToLogin(attemptedPath);
   }
 

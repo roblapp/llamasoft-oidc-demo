@@ -4,7 +4,6 @@ import { Switch, Route } from 'react-router-dom';
 import Navbar from './Navbar';
 import Home from './Home';
 import Callback from './Callback';
-import SilentRenew from './SilentRenew';
 import Landing from './Landing';
 import Error from './Error';
 import LoginRedirect from './LoginRedirect';
@@ -17,22 +16,22 @@ import './App.css';
 class App extends React.Component {
     componentWillMount() {
         console.log("Auth componentWillMount");
-        this.props.auth.getEventManager().addOnLoginSuccessEventHandler(this.onLoginSuccess);
+        // this.props.auth.getEventManager().addOnLoginSuccessEventHandler(this.onLoginSuccess);
         this.props.auth.getEventManager().addOnLoginErrorEventHandler(this.onLoginFailure);
         this.props.auth.getEventManager().addOnSilentRenewSuccessEventHandler(this.onSilentRenewSuccess);
         this.props.auth.getEventManager().addOnSilentRenewErrorEventHandler(this.onSilentRenewError);
         this.props.auth.getEventManager().addOnSilentRenewTriggeredEventHandler(this.onSilentRenewTriggered);
-        this.props.auth.getEventManager().addOnAccessTokenExpiredEventHandler(this.onAccessTokenExpired);
+        this.props.auth.getEventManager().addOnTokenValidatedEventHandler(this.onTokenValidated);
     }
 
     componentWillUnmount() {
         console.log("Auth componentWillUnmount");
-        this.props.auth.getEventManager().removeOnLoginSuccessEventHandler(this.onLoginSuccess);
+        // this.props.auth.getEventManager().removeOnLoginSuccessEventHandler(this.onLoginSuccess);
         this.props.auth.getEventManager().removeOnLoginErrorEventHandler(this.onLoginFailure);
         this.props.auth.getEventManager().removeOnSilentRenewSuccessEventHandler(this.onSilentRenewSuccess);
         this.props.auth.getEventManager().removeOnSilentRenewErrorEventHandler(this.onSilentRenewError);
         this.props.auth.getEventManager().removeOnSilentRenewTriggeredEventHandler(this.onSilentRenewTriggered);
-        this.props.auth.getEventManager().removeOnAccessTokenExpiredEventHandler(this.onAccessTokenExpired);
+        this.props.auth.getEventManager().removeOnTokenValidatedEventHandler(this.onTokenValidated);
     }
 
     onLoginSuccess = (returnPath) => {
@@ -45,8 +44,9 @@ class App extends React.Component {
     }
 
     onLoginFailure = (error) => {
-        console.error(error);
-        this.props.history.push("/Error");
+        alert("Login Error");
+        console.log(error);
+        console.error("Login failed");
     }
 
     onSilentRenewSuccess = () => {
@@ -62,10 +62,10 @@ class App extends React.Component {
         console.log("SilentRenew was triggered");
     }
 
-    onAccessTokenExpired = () => {
-        console.log("accessTokenExpired");
+    onTokenValidated = (tokenType, tokenValue) => {
+        console.log(`[Validated Token] TokenType ${tokenType} TokenValue ${tokenValue}`);
     }
-
+    
     render() {
         console.log("App render");
         return (
@@ -99,9 +99,9 @@ class App extends React.Component {
                                     return <Callback auth={this.props.auth} {...props} />;
                                 }}/>
 
-                                <Route exact path="/SilentRenew" render={(props) => {
+                                {/*<Route exact path="/SilentRenew" render={(props) => {
                                     return <SilentRenew auth={this.props.auth} {...props} />;
-                                }}/>
+                                }}/>*/}
 
 
 

@@ -4,7 +4,9 @@ import loading from './loading.svg';
 class Callback extends Component {
 
   componentDidMount() {
-    this.props.auth.handleAuthorizeCallback();
+    this.props.auth.handleAuthorizeCallback()
+      .then(x => x ? this.props.history.push(x) : this.props.history.push("/Landing"))
+      .catch(error => alert(error));
   }
 
   render() {

@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+/*import React, { Component } from 'react';
 import loading from './loading.svg';
 
 class SilentRenew extends Component {
@@ -29,4 +29,4 @@ class SilentRenew extends Component {
   }
 }
 
-export default SilentRenew;
+export default SilentRenew;*/
