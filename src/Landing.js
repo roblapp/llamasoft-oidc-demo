@@ -96,11 +96,6 @@ class Landing extends React.Component {
                         <div className="col-xs-12">
                             <Tabs defaultActiveKey={1} id="landing-page-tabs">
                                 <Tab eventKey={1} title={"Auth (Auth Data Stored In Redux State)"}>
-                                    <div className="row">
-                                        <div className="col-xs-12">
-                                            <Button bsStyle="primary" onClick={this.props.getUser}>Show User access_token</Button>
-                                        </div>
-                                    </div>
                                     
                                     <div className="row">
                                         <div className="col-xs-12">
@@ -152,13 +147,6 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        getUser: () => {
-            const userManager = dispatch(getUserManager);
-            userManager.getUser().then(user => {
-                alert(user.access_token.substring(user.access_token.lastIndexOf(".")));
-            });
-        },
-
         getAllClaims : (accessToken) => {
                 httpGetRequest('http://localhost:5001/identity', accessToken)
                     .then(response => {
