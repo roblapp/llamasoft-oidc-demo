@@ -14,14 +14,8 @@ console.log("Creating Store");
 //   next(action);
 // }
 
-let userManager = new UserManager(config.oidc);
-// userManager.events.addUserLoaded((user) => {
-//     alert("User Loaded");
-//     console.dir(user);
-// });
-
 const services = {
-  UserManager: userManager
+  UserManager: new UserManager(config.oidc)
 };
 
 export default (initialState, history) => {

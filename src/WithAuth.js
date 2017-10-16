@@ -11,7 +11,6 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
     return {
       getUserManager: () => {
-        console.log("getUserManager dispatched in withAuth");
         return dispatch(getUserManager);
       }
     }

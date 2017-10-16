@@ -44,13 +44,9 @@ const mapDispatchToProps = dispatch => {
               });
           })
           .catch(error => {
-            console.log("before dispatch(setApplicationError(message));");
               const message = error.message ? error.message : 'An error has occurred';
               dispatch(setApplicationError(message));
-              console.log("after dispatch(setApplicationError(message));");
-              console.log("befpre dispatch(push(...));");
               dispatch(push("/Error"));
-              console.log("after dispatch(push(...));");
           });
     }
   }
