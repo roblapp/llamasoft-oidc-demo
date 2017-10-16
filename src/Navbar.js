@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import PropTypes from 'prop-types';
 import { Link } from  'react-router-dom';
 import './Navbar.css';
 
@@ -10,24 +9,9 @@ class Navbar extends Component {
     this.renderMenu = this.renderMenu.bind(this);
   }
 
-  handleLogin = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    alert("handle login called");
-    this.props.auth.redirectToLogin();
-  }
-
-  handleLogout = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    alert("handle logout called");
-    this.props.auth.redirectToLogout();
-  }
-
   //http://getbootstrap.com/examples/theme/
   renderMenu() {
-    console.log("$ " + this.props.auth.isAuthenticated());
-    if (this.props.auth.isAuthenticated()) {
+    if (this.props.isAuthenticated) {
       return (
         <div id="navbar" className="navbar-collapse collapse">
           <ul className="nav navbar-nav">
@@ -37,7 +21,7 @@ class Navbar extends Component {
             <li><Link to="/Settings"><i style={{ paddingRight: "7px" }} className="fa fa-edit" aria-hidden="true"></i>Settings</Link></li>
             <li><Link to="/Account"><i style={{ paddingRight: "7px" }} className="fa fa-id-card-o" aria-hidden="true"></i>Account</Link></li>
             <li><Link to="/Help"><i style={{ paddingRight: "7px" }} className="fa fa-question-circle-o" aria-hidden="true"></i>Help</Link></li>
-            <li><a href="#" onClick={this.handleLogout}><i style={{ paddingRight: "7px" }} className="fa fa-sign-out" aria-hidden="true"></i>Sign Out</a></li>
+            <li><a href="#" onClick={this.props.onLogout}><i style={{ paddingRight: "7px" }} className="fa fa-sign-out" aria-hidden="true"></i>Sign Out</a></li>
           </ul>
           <form className="navbar-form navbar-right">
             <input type="text" className="form-control" placeholder="Search..."/>
@@ -53,7 +37,7 @@ class Navbar extends Component {
         </ul>
         <ul className="nav navbar-nav navbar-right">
           <li><Link to="/Help"><i style={{ paddingRight: "7px" }} className="fa fa-question-circle-o" aria-hidden="true"></i>Help</Link></li>
-          <li><a href="#" onClick={this.handleLogin}><i style={{ paddingRight: "7px" }} className="fa fa-sign-in" aria-hidden="true"></i>Sign In</a></li>
+          <li><a href="#" onClick={this.props.onLogin}><i style={{ paddingRight: "7px" }} className="fa fa-sign-in" aria-hidden="true"></i>Sign In</a></li>
         </ul>
       </div>
     );
@@ -80,9 +64,5 @@ class Navbar extends Component {
       );
   }
 }
-
-Navbar.propTypes = {
-    auth: PropTypes.object.isRequired
-};
 
 export default Navbar;

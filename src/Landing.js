@@ -1,39 +1,34 @@
 import React from 'react';
-import { Button } from 'react-bootstrap';
+import { Tabs, Tab, Button } from 'react-bootstrap';
 import { connect } from 'react-redux';
-import * as actions from './actions/landingPageActions';
+import * as types from './actions/types';
+import { getUserManager } from './actions/authActions';
+import { httpGetRequest } from './actions/httpActions';
+import Navbar from './Navbar';
+import './App.css';
 import './Landing.css';
 
-export class Landing extends React.Component {
+class Landing extends React.Component {
     constructor(props) {
         super(props);
 
         this.onApiClick = this.onApiClick.bind(this);
-        this.renderBody = this.renderBody.bind(this);
-        this.renderError = this.renderError.bind(this);
-        this.renderApplicationMetadata = this.renderApplicationMetadata.bind(this);
-        this.renderOpenIdConnectData = this.renderOpenIdConnectData.bind(this);
-    }
-
-    componentWillMount() {
-        console.log("Landing componentWillMount");
-    }
-
-    componentWillUnmount() {
-        console.log("Landing componentWillUnmount");
     }
 
     onApiClick() {
-        const accessToken = this.props.auth.getAccessToken();
+        console.log("onApiClick handler");
+        const accessToken = this.props.auth.user.access_token;
+        console.log("Sending accessToken");
+        console.log(accessToken);
         this.props.getAllClaims(accessToken);
     }
 
     renderBody() {
-        if (this.props.data) {
+        if (this.props.landingPageData.data) {
             return (
                 <div>
                     <h2>Data From The Server</h2>
-                    <pre>{JSON.stringify(this.props.data, null, 2)}</pre>
+                    <pre>{JSON.stringify(this.props.landingPageData.data, null, 2)}</pre>
                 </div>
             );
         }
@@ -45,31 +40,39 @@ export class Landing extends React.Component {
                 <div>
                     <h2>An error occurred calling the API</h2>
                     <pre>
-                        {JSON.stringify(this.props.error, null, 2)}
+                        {JSON.stringify(this.props.landingPageData.error, null, 2)}
                     </pre>
                 </div>
             );
     }
 
-    renderApplicationMetadata() {
-        const authOptions = this.props.auth.getAuthOptions();
+    renderUserManagerSettings() {
+        const userManagerSettings = this.props.getUserManager().settings;
+
+        const json = {
+            authority: userManagerSettings.authority,
+            client_id: userManagerSettings.client_id,
+            redirect_uri: userManagerSettings.redirect_uri,
+            scope: userManagerSettings.scope,
+            post_logout_redirect_uri: userManagerSettings.post_logout_redirect_uri
+        };
 
         return (
                 <div>
-                    <h2>Application Metadata</h2>
+                    <h2>UserManager Settings</h2>
                     <pre>
-                        {JSON.stringify(authOptions, null, 2)}
+                        {JSON.stringify(json, null, 2)}
                     </pre>
                 </div>
             );
     }
 
-    renderOpenIdConnectData() {
+    renderAuthFromRedux() {
         return (
                 <div>
-                    <h2>OpenID Connect Data (From ID Token)</h2>
+                    <h2>Auth (Stored In Redux State)</h2>
                     <pre>
-                        {JSON.stringify(this.props.auth.getIdTokenContent(), null, 2)}
+                        {JSON.stringify(this.props.auth, null, 2)}
                     </pre>
                 </div>
             );
@@ -77,21 +80,63 @@ export class Landing extends React.Component {
 
     render() {
         return (
-            <div>
-                <div className="row pad-row">
-                    <Button bsStyle="primary" onClick={this.onApiClick}>Call Protected API</Button>
+            <div className="App">
+                <div className="App-header">
+                    <Navbar onLogout={this.props.signOut} isAuthenticated={true} />
                 </div>
-                <div className="row pad-row">
-                    <div className="col-xs-6">
-                        {this.props.error && this.props.error !== '' ?
-                            this.renderError()
-                            :
-                            this.renderBody()
-                        }
+
+                <div className="App-content">
+                    <div className="row">
+                        <div className="col-xs-12">
+                            <h3>Route: <code>{this.props.location.pathname}</code></h3>
+                        </div>
                     </div>
-                    <div className="col-xs-6">
-                        {this.renderApplicationMetadata()}
-                        {this.renderOpenIdConnectData()}
+
+                    <div className="row">
+                        <div className="col-xs-12">
+                            <Tabs defaultActiveKey={1} id="landing-page-tabs">
+                                <Tab eventKey={1} title={"Auth (Auth Data Stored In Redux State)"}>
+                                    <div className="row">
+                                        <div className="col-xs-12">
+                                            <Button bsStyle="primary" onClick={this.props.getUser}>Show User access_token</Button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="row">
+                                        <div className="col-xs-12">
+                                            {this.renderAuthFromRedux()}
+                                        </div>
+                                    </div>
+                                </Tab>
+
+                                <Tab eventKey={2} title={"User Manager Settings"}>
+                                    <div className="row">
+                                        <div className="col-xs-12">
+                                            {this.renderUserManagerSettings()}
+                                        </div>
+                                    </div>
+                                </Tab>
+
+
+                                <Tab eventKey={3} title={"Call Protected API"}>
+                                    <div className="row">
+                                        <div className="col-xs-12">
+                                            <Button bsStyle="primary" onClick={this.onApiClick}>Call Protected API</Button>
+                                        </div>
+                                    </div>
+
+                                    <div className="row">
+                                        <div className="col-xs-12">
+                                            {this.props.landingPageData.error && this.props.landingPageData.error !== '' ?
+                                                this.renderError()
+                                                :
+                                                this.renderBody()
+                                            }
+                                        </div>
+                                    </div>
+                                </Tab>
+                            </Tabs>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -99,13 +144,41 @@ export class Landing extends React.Component {
     }
 }
 
-function mapStateToProps(state) {
+const mapStateToProps = (state) => {
     return {
-      data: state.landingPageData.data,
-      error: state.landingPageData.error
+        landingPageData: state.landingPageData
     };
 }
 
-const mapDispatchToProps = { ...actions };
+const mapDispatchToProps = (dispatch) => {
+    return {
+        getUser: () => {
+            const userManager = dispatch(getUserManager);
+            userManager.getUser().then(user => {
+                alert(user.access_token.substring(user.access_token.lastIndexOf(".")));
+            });
+        },
+
+        getAllClaims : (accessToken) => {
+                httpGetRequest('http://localhost:5001/identity', accessToken)
+                    .then(response => {
+                        dispatch({
+                                type: types.GET_ALL_CLAIMS,
+                                payload: response.data
+                            });
+                    }).catch(error => {
+                        dispatch({
+                                type: types.GET_ALL_CLAIMS_ERROR,
+                                payload: error
+                            });
+                    });
+        },
+
+        signOut: () => {
+            const userManager = dispatch(getUserManager);
+            userManager.signoutRedirect();
+        }
+    };
+}
 
 export default connect(mapStateToProps, mapDispatchToProps)(Landing);

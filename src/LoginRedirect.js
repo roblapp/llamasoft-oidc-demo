@@ -1,12 +1,13 @@
-import React, { Component } from 'react';
+/*import React, { Component } from 'react';
 import loading from './loading.svg';
 
 class LoginRedirect extends Component {
 
   componentDidMount() {
-      const attemptedPath = this.props.returnUrlPath;
-      alert("redirectToLogin LoginRedirect");
-      this.props.auth.redirectToLogin(attemptedPath);
+      // const attemptedPath = this.props.returnUrlPath;
+      console.log("redirectToLogin LoginRedirect");
+      
+      this.props.userManager.signinRedirect();
   }
 
   render() {
@@ -27,4 +28,4 @@ class LoginRedirect extends Component {
   }
 }
 
-export default LoginRedirect;
+export default LoginRedirect;*/

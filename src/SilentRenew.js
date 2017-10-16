@@ -1,32 +1,31 @@
-/*import React, { Component } from 'react';
-import loading from './loading.svg';
+import React from 'react';
+import { connect } from 'react-redux';
+import { getUserManager } from './actions/authActions';
 
-class SilentRenew extends Component {
-
-  componentDidMount() {
-    this.props.auth.handleSilentRenewCallback();
+class SilentRenew extends React.Component {
+  componentWillMount () {
+      this.props.completeSilentRenew();
   }
 
-  render() {
-    const iconStyle = {
-        position: 'absolute',
-        display: 'flex',
-        justifyContent: 'center',
-        backgroundColor: 'white',
-        height: '50vh',
-        width: '100vw'
-        // top: 0,
-        // bottom: 0,
-        // left: 0,
-        // right: 0
-    };
-    
-    return (
-      <div style={iconStyle}>
-        <img src={loading} alt="loading"/>
-      </div>
-    );
+  render () {
+    return <div>SilentRenew</div>
   }
 }
 
-export default SilentRenew;*/
+// const mapStateToProps = (state) => {
+//     return {}
+// }
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+      completeSilentRenew: () => {
+          const userManager = dispatch(getUserManager);
+          userManager.signinSilentCallback().then(user => {
+              console.log("Completed SilentRenew");
+              // dispatch(setAuthenticatedUser(user));
+          });
+      }
+    }
+}
+
+export default connect(null, mapDispatchToProps)(SilentRenew);

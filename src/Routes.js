@@ -1,28 +1,32 @@
-/*import React from 'react';
-import { Redirect, Route, BrowserRouter, Switch } from 'react-router-dom';
-import LLamasoftAuthentication from './auth/LLamasoftAuthentication';
-import history from './history';
-import Navbar from './Navbar';
+import React from 'react';
+import { ConnectedRouter } from 'react-router-redux'
+import { Switch, Route, Redirect } from 'react-router-dom';
 import Home from './Home';
 import Callback from './Callback';
 import Landing from './Landing';
 import Error from './Error';
+import SilentRenew from './SilentRenew';
+import withAuth from './WithAuth';
 
+const Routes = ({ history }) => (
+    <ConnectedRouter history={history}>
+        <Switch>
 
-const authService = new LLamasoftAuthentication();
+            {/* Put all non protected routes in this format */}
+            <Route exact path="/" component={Home} />
+            <Route exact path="/Error" component={Error} />
 
+            {/* Protected Routes */}
+            <Route exact path="/Landing" component={withAuth(Landing)} />
 
-const handleAuthentication = (nextState, replace) => {
-  if (/access_token|id_token|error/.test(nextState.location.hash)) {
-    authService.handleAuthentication();
-  }
-};
+            {/* Required for OpenID Connect */}
+            <Route exact path="/Callback" component={Callback} />
+            <Route exact path="/SilentRenew" component={SilentRenew} />
 
-export const makeMainRoutes = () => {
+            {/* Handle non matching routes */}
+            <Redirect to="/" />
+        </Switch>
+    </ConnectedRouter>
+);
 
-    return (
-        <BrowserRouter>
-            <App auth={} {...props} />
-        </BrowserRouter>
-    );
-};*/
+export default Routes;
